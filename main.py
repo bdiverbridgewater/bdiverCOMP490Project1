@@ -1,8 +1,8 @@
-import json
 from serpapi.google_search import GoogleSearch
 import secrets
 import sqlite3
 from typing import Tuple
+import json
 
 
 def job_search(result_offset) -> dict:
@@ -18,12 +18,18 @@ def job_search(result_offset) -> dict:
     }
     search = GoogleSearch(params)
     results = search.get_dict()
-    return results["jobs_results"]
+    return results
 
 
-def write_dict_to_file(dict_input: dict, write_file):
-    dict_as_string = json.dumps(dict_input)
-    write_file.write(dict_as_string)
+def get_job_data(search_result_number, data):
+    job = data["jobs_results"][search_result_number % 10]
+    job_title = job["title"]
+    company_name = job["company_name"]
+    location = job["location"]
+    description = job["description"]
+    related_link = job["related_links"][0]["link"]
+    job_data = [search_result_number, job_title, company_name, location, description, related_link]
+    return job_data
 
 
 def open_database(file_name: str) -> Tuple[sqlite3.Connection, sqlite3.Cursor]:
@@ -38,13 +44,8 @@ def setup_database(cursor: sqlite3.Cursor):
         job_title TEXT NOT NULL,
         company_name TEXT NOT NULL,
         location TEXT NOT NULL,
-        is_remote BOOLEAN,
         description TEXT,
-        date_posted TEXT,
-        salary TEXT,
-        related_link TEXT)''')
-    cursor.execute('''CREATE TABLE IF NOT EXISTS qualifications(
-    FOREIGN KEY (search_result) REFERENCES jobs(search_result))''')
+        related_link TEXT);''')
 
 
 def close_database(connection: sqlite3.Connection):
@@ -53,19 +54,15 @@ def close_database(connection: sqlite3.Connection):
 
 
 def main():
-    total_pages = 5
-    results_per_page = 10
-    current_pages = 0
-    search_results_file = open('search_results.txt', 'a')
-    print('Starting job search now...')
-    while current_pages < total_pages:
-        # There are 10 results per page, so multiplying the current pages by 10 gives the right offset to search the
-        # 2nd and 3rd page etc.
-        page_results = job_search(current_pages * results_per_page)
-        write_dict_to_file(page_results, search_results_file)
-        current_pages += 1
-    search_results_file.close()
-    print(f'Search Complete. Results saved to "{search_results_file.name}"')
+    search_results = job_search(0)
+    connection, cursor = open_database("job_search.sqlite")
+    setup_database(cursor)
+    job_number = 0
+    while job_number < 10:
+        values = get_job_data(job_number, search_results)
+        cursor.executemany('''INSERT INTO jobs VALUES(?, ?, ?, ?, ?, ?);''', (values,))
+        job_number += 1
+    close_database(connection)
 
 
 if __name__ == "__main__":
