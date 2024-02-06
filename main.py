@@ -22,11 +22,11 @@ def job_search(result_offset) -> dict:
 
 def get_job_data(search_result_number, data):
     job = data["jobs_results"][search_result_number % 10]
-    job_title = job["title"]
-    company_name = job["company_name"]
-    location = job["location"]
-    description = job["description"]
-    related_link = job["related_links"][0]["link"]
+    job_title = job.get("title")
+    company_name = job.get("company_name")
+    location = job.get("location")
+    description = job.get("description")
+    related_link = job["related_links"][0].get("link")
     job_data = [search_result_number, job_title, company_name, location, description, related_link]
     return job_data
 
@@ -40,9 +40,9 @@ def open_database(file_name: str) -> Tuple[sqlite3.Connection, sqlite3.Cursor]:
 def setup_database(cursor: sqlite3.Cursor):
     cursor.execute('''CREATE TABLE IF NOT EXISTS jobs(
         search_result INTEGER PRIMARY KEY,
-        job_title TEXT NOT NULL,
-        company_name TEXT NOT NULL,
-        location TEXT NOT NULL,
+        job_title TEXT,
+        company_name TEXT,
+        location TEXT,
         description TEXT,
         related_link TEXT);''')
 
@@ -53,11 +53,13 @@ def close_database(connection: sqlite3.Connection):
 
 
 def main():
-    search_results = job_search(0)
     connection, cursor = open_database("job_search.sqlite")
     setup_database(cursor)
     job_number = 0
-    while job_number < 10:
+    search_results = None
+    while job_number < 50:
+        if job_number % 10 == 0:
+            search_results = job_search(job_number)
         values = get_job_data(job_number, search_results)
         cursor.executemany('''INSERT INTO jobs VALUES(?, ?, ?, ?, ?, ?);''', (values,))
         job_number += 1
