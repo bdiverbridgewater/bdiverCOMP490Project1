@@ -2,7 +2,6 @@ from serpapi.google_search import GoogleSearch
 import secrets
 import sqlite3
 from typing import Tuple
-import json
 
 
 def job_search(result_offset) -> dict:
