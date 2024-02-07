@@ -19,5 +19,6 @@ def test_database_functionality():
 
 def test_data_retrieval():
     search_results = job_search(0)
+    assert search_results is not None
     assert len(search_results.get("jobs_results")) == 10
     return search_results
