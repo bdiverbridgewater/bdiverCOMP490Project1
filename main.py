@@ -60,12 +60,12 @@ def setup_database(cursor: sqlite3.Cursor):
         work_from_home BOOL DEFAULT FALSE,
         time_since_posting TEXT,
         salary TEXT,
-        id INTEGER NOT NULL,
-        PRIMARY KEY(id)
+        id INTEGER PRIMARY KEY NOT NULL
         );''')
     cursor.execute('''CREATE TABLE IF NOT EXISTS qualifications(
         id INTEGER NOT NULL,
-        qualifications TEXT
+        qualifications TEXT,
+        FOREIGN KEY(id) REFERENCES jobs(id)
         );''')
 
 
@@ -92,7 +92,7 @@ def insert_jobs_to_database(search_pages_total, cursor):
 
 
 def main():
-    page_total = 1
+    page_total = 5
     connection, cursor = open_database("job_search.sqlite")
     setup_database(cursor)
     insert_jobs_to_database(page_total, cursor)

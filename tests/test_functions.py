@@ -1,0 +1,21 @@
+from main import *
+
+
+def test_database_functionality():
+    connection, cursor = open_database("test_database.sqlite")
+    setup_database(cursor)
+    test_search = test_data_retrieval()
+    insert_job_to_database(0, test_search, cursor)
+    cursor.execute('''SELECT * FROM jobs;''')
+    job: Tuple = cursor.fetchone()
+    assert job[0] == test_search["jobs_results"][0].get("title")
+    assert job[1] == test_search["jobs_results"][0].get("company_name")
+    cursor.execute('''DROP TABLE jobs;''')
+    cursor.execute('''DROP TABLE qualifications;''')
+    close_database(connection)
+
+
+def test_data_retrieval():
+    search_results = job_search(0)
+    assert len(search_results["jobs_results"]) == 10
+    return search_results
