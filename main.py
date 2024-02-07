@@ -17,11 +17,11 @@ def job_search(result_offset) -> dict:
     }
     search = google_search.GoogleSearch(params)
     results = search.get_dict()
-    return results
+    return results.get("jobs_results")
 
 
 def get_job_data(job_number, data):
-    job = data["jobs_results"][job_number % 10]
+    job = data[job_number % 10]
     job_title = job.get("title")
     company_name = job.get("company_name")
     location = job.get("location")
