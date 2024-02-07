@@ -1,1 +1,1 @@
-serpapi
+serpapi.google_search
