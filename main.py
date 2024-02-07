@@ -1,4 +1,4 @@
-from serpapi import google_search
+from serpapi.google_search import GoogleSearch
 import secrets
 import sqlite3
 from typing import Tuple
@@ -15,7 +15,7 @@ def job_search(result_offset) -> dict:
         "location": "Boston, Massachusetts, United States",
         "start": result_offset
     }
-    search = google_search.GoogleSearch(params)
+    search = GoogleSearch(params)
     results = search.get_dict()
     return results
 
