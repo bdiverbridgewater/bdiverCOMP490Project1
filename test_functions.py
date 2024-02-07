@@ -1,5 +1,6 @@
-from main import open_database, setup_database, insert_job_to_database, close_database, job_search
 from typing import Tuple
+
+from main import open_database, setup_database, insert_job_to_database, close_database, job_search
 
 
 def test_database_functionality():
