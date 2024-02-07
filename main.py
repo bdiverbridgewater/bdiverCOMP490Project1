@@ -2,6 +2,7 @@ from serpapi.google_search import GoogleSearch
 import secrets
 import sqlite3
 from typing import Tuple
+import json
 
 
 def job_search(result_offset) -> dict:
@@ -27,8 +28,21 @@ def get_job_data(job_number, data):
     location = job.get("location")
     description = job.get("description")
     related_link = job["related_links"][0].get("link")
-    job_data = [job_title, company_name, location, description, related_link]
-    return job_data
+    work_from_home = job["detected_extensions"].get("work_from_home")
+    time_since_posting = job["detected_extensions"].get("posted_at")
+    try:
+        salary = job["job_highlights"][2]["items"][0]
+    except IndexError:
+        salary = None
+    qualifications = job["job_highlights"][0]["items"]
+    qualifications_string = ''
+    index = 0
+    for key in qualifications:
+        qualifications_string = qualifications_string + qualifications[index]
+        index += 1
+    job_data = [job_title, company_name, location, description, related_link, work_from_home, time_since_posting,
+                salary, job_number]
+    return job_data, qualifications_string
 
 
 def open_database(file_name: str) -> Tuple[sqlite3.Connection, sqlite3.Cursor]:
@@ -39,16 +53,21 @@ def open_database(file_name: str) -> Tuple[sqlite3.Connection, sqlite3.Cursor]:
 
 def setup_database(cursor: sqlite3.Cursor):
     cursor.execute('''CREATE TABLE IF NOT EXISTS jobs(
-        PRIMARY KEY(id)
         job_title TEXT,
         company_name TEXT,
         location TEXT,
         description TEXT,
-        related_link TEXT
+        related_link TEXT,
+        work_from_home BOOL DEFAULT FALSE,
+        time_since_posting TEXT,
+        salary TEXT,
+        id INTEGER NOT NULL,
+        PRIMARY KEY(id)
         );''')
     cursor.execute('''CREATE TABLE IF NOT EXISTS qualifications(
-        FOREIGN KEY(id) references jobs(id)
-        qualifications TEXT''')
+        id INTEGER NOT NULL,
+        qualifications TEXT
+        );''')
 
 
 def close_database(connection: sqlite3.Connection):
@@ -57,8 +76,10 @@ def close_database(connection: sqlite3.Connection):
 
 
 def insert_job_to_database(job_number, search_results, cursor):
-    values = get_job_data(job_number, search_results)
-    cursor.executemany('''INSERT INTO jobs VALUES(?, ?, ?, ?, ?, ?);''', (values,))
+    values, qualifications = get_job_data(job_number, search_results)
+    qualifications_data = [job_number, qualifications]
+    cursor.executemany('''INSERT INTO jobs VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?);''', (values,))
+    cursor.executemany('''INSERT INTO qualifications VALUES(?, ?);''', (qualifications_data,))
 
 
 def insert_jobs_to_database(search_pages_total, cursor):
