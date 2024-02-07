@@ -1,1 +1,1 @@
-serpapi~=0.1.5
+serpapi
