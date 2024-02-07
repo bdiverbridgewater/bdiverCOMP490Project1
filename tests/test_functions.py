@@ -1,4 +1,4 @@
-from ..main import open_database, setup_database, insert_job_to_database, close_database, job_search
+from main import open_database, setup_database, insert_job_to_database, close_database, job_search
 from typing import Tuple
 
 
