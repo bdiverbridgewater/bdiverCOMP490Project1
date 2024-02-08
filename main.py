@@ -20,28 +20,42 @@ def job_search(result_offset) -> dict:
     return results.get("jobs_results")
 
 
-def get_job_data(job_number, data):
-    job = data[job_number % 10]
-    job_title = job.get("title")
-    company_name = job.get("company_name")
-    location = job.get("location")
-    description = job.get("description")
-    related_link = job["related_links"][0].get("link")
-    work_from_home = job["detected_extensions"].get("work_from_home")
-    time_since_posting = job["detected_extensions"].get("posted_at")
+def get_jobs_data(jobs):
+    jobs_data = []
+    index = 0
+    while index < 10:
+        job = jobs[index]
+        job_title = job.get("title")
+        company_name = job.get("company_name")
+        location = job.get("location")
+        description = job.get("description")
+        related_link = job["related_links"][0].get("link")
+        work_from_home = job["detected_extensions"].get("work_from_home")
+        time_since_posting = job["detected_extensions"].get("posted_at")
+        salary = try_to_get_salary(job)
+        qualifications = list_to_string(job["job_highlights"][0]["items"])
+        job_data = [job_title, company_name, location, description, related_link, work_from_home, time_since_posting,
+                    salary, qualifications]
+        jobs_data.append(job_data)
+        index += 1
+    return jobs_data
+
+
+def list_to_string(list_in):
+    str_out = ''
+    index = 0
+    for _ in list_in:
+        str_out = str_out + list_in[index]
+        index += 1
+    return str_out
+
+
+def try_to_get_salary(job):
     try:
         salary = job["job_highlights"][2]["items"][0]
     except IndexError:
         salary = None
-    qualifications = job["job_highlights"][0]["items"]
-    qualifications_string = ''
-    index = 0
-    for key in qualifications:
-        qualifications_string = qualifications_string + qualifications[index]
-        index += 1
-    job_data = [job_title, company_name, location, description, related_link, work_from_home, time_since_posting,
-                salary, job_number]
-    return job_data, qualifications_string
+    return salary
 
 
 def open_database(file_name: str) -> Tuple[sqlite3.Connection, sqlite3.Cursor]:
@@ -59,13 +73,12 @@ def setup_database(cursor: sqlite3.Cursor):
         related_link TEXT,
         work_from_home BOOL DEFAULT FALSE,
         time_since_posting TEXT,
-        salary TEXT,
-        id INTEGER PRIMARY KEY NOT NULL
+        salary TEXT
         );''')
     cursor.execute('''CREATE TABLE IF NOT EXISTS qualifications(
-        id INTEGER NOT NULL,
+        id INT,
         qualifications TEXT,
-        FOREIGN KEY(id) REFERENCES jobs(id)
+        FOREIGN KEY (id) REFERENCES jobs(rowid)
         );''')
 
 
@@ -74,28 +87,29 @@ def close_database(connection: sqlite3.Connection):
     connection.close()
 
 
-def insert_job_to_database(job_number, search_results, cursor):
-    values, qualifications = get_job_data(job_number, search_results)
-    qualifications_data = [job_number, qualifications]
-    cursor.executemany('''INSERT INTO jobs VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?);''', (values,))
-    cursor.executemany('''INSERT INTO qualifications VALUES(?, ?);''', (qualifications_data,))
+def insert_job_to_database(job_data, cursor):
+    jobs_table_data = job_data[:8]
+    qualifications_data = job_data[8:]
+    cursor.executemany('''INSERT INTO jobs
+    VALUES(?, ?, ?, ?, ?, ?, ?, ?);''', (jobs_table_data,))
+    cursor.executemany('''INSERT INTO qualifications(qualifications) VALUES(?);''', (qualifications_data,))
 
 
-def insert_jobs_to_database(search_pages_total, cursor):
-    search_results = None
-    job_number = 0
-    while job_number < search_pages_total * 10:
-        if job_number % 10 == 0:
-            search_results = job_search(job_number)
-        insert_job_to_database(job_number, search_results, cursor)
-        job_number += 1
+def insert_jobs_to_database(jobs_data, cursor):
+    for job in jobs_data:
+        insert_job_to_database(job, cursor)
 
 
 def main():
-    page_total = 5
     connection, cursor = open_database("job_search.sqlite")
     setup_database(cursor)
-    insert_jobs_to_database(page_total, cursor)
+    pages_searched = 0
+    total_pages = 1
+    while pages_searched < total_pages:
+        jobs = job_search(pages_searched * 10)
+        jobs_data = get_jobs_data(jobs)
+        insert_jobs_to_database(jobs_data, cursor)
+        pages_searched += 1
     close_database(connection)
 
 
