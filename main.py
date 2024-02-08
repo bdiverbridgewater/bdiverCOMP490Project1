@@ -66,7 +66,6 @@ def open_database(file_name: str) -> Tuple[sqlite3.Connection, sqlite3.Cursor]:
 
 def setup_database(cursor: sqlite3.Cursor):
     cursor.execute('''CREATE TABLE IF NOT EXISTS jobs(
-        INTEGER PRIMARY KEY ASC,
         job_title TEXT,
         company_name TEXT,
         location TEXT,
@@ -91,8 +90,7 @@ def close_database(connection: sqlite3.Connection):
 def insert_job_to_database(job_data, cursor):
     jobs_table_data = job_data[:8]
     qualifications_data = job_data[8:]
-    cursor.executemany('''INSERT INTO jobs(
-    job_title, company_name, location, description, related_link, work_from_home, time_since_posting, salary)
+    cursor.executemany('''INSERT INTO jobs
     VALUES(?, ?, ?, ?, ?, ?, ?, ?);''', (jobs_table_data,))
     cursor.executemany('''INSERT INTO qualifications(qualifications) VALUES(?);''', (qualifications_data,))
 
