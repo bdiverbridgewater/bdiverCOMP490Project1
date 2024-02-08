@@ -12,3 +12,7 @@ The main function of this program is to use Google job search via serpapi to sav
 In the current build of the program, 5 searches are done consecutively, with 10 results per search. Running the program
 will use 5 of your searches allotted by serpapi. If you attempt to run the program multiple times, the results will be 
 added to the already existing database.
+The database has 2 tables. The table called "jobs" has 8 columns of job data, each row referencing a different search 
+result. The table called qualifications contains information about qualifications for a job based on a foreign key 
+referencing the "jobs" table.
+The foreign key is not functioning as intended. It appears as null
