@@ -25,6 +25,7 @@ def get_jobs_data(jobs):
     index = 0
     while index < 10:
         job = jobs[index]
+        job_id = job.get("job_id")
         job_title = job.get("title")
         company_name = job.get("company_name")
         location = job.get("location")
@@ -34,7 +35,7 @@ def get_jobs_data(jobs):
         time_since_posting = job["detected_extensions"].get("posted_at")
         salary = try_to_get_salary(job)
         qualifications = list_to_string(job["job_highlights"][0]["items"])
-        job_data = [job_title, company_name, location, description, related_link, work_from_home, time_since_posting,
+        job_data = [job_id, job_title, company_name, location, description, related_link, work_from_home, time_since_posting,
                     salary, qualifications]
         jobs_data.append(job_data)
         index += 1
@@ -66,6 +67,7 @@ def open_database(file_name: str) -> Tuple[sqlite3.Connection, sqlite3.Cursor]:
 
 def setup_database(cursor: sqlite3.Cursor):
     cursor.execute('''CREATE TABLE IF NOT EXISTS jobs(
+        job_id TEXT PRIMARY KEY,
         job_title TEXT,
         company_name TEXT,
         location TEXT,
@@ -76,9 +78,9 @@ def setup_database(cursor: sqlite3.Cursor):
         salary TEXT
         );''')
     cursor.execute('''CREATE TABLE IF NOT EXISTS qualifications(
-        id INT,
+        job_id TEXT,
         qualifications TEXT,
-        FOREIGN KEY (id) REFERENCES jobs(rowid)
+        FOREIGN KEY (job_id) REFERENCES jobs(job_id)
         );''')
 
 
@@ -88,11 +90,11 @@ def close_database(connection: sqlite3.Connection):
 
 
 def insert_job_to_database(job_data, cursor):
-    jobs_table_data = job_data[:8]
-    qualifications_data = job_data[8:]
+    jobs_table_data = job_data[:9]
+    qualifications_data = [job_data[0], job_data[9]]
     cursor.executemany('''INSERT INTO jobs
-    VALUES(?, ?, ?, ?, ?, ?, ?, ?);''', (jobs_table_data,))
-    cursor.executemany('''INSERT INTO qualifications(qualifications) VALUES(?);''', (qualifications_data,))
+    VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?);''', (jobs_table_data,))
+    cursor.executemany('''INSERT INTO qualifications VALUES(?, ?);''', (qualifications_data,))
 
 
 def insert_jobs_to_database(jobs_data, cursor):
