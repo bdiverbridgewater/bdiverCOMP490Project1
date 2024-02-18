@@ -1,7 +1,9 @@
+import time
 from serpapi import google_search
 import secrets
 import sqlite3
 from typing import Tuple
+from openpyxl import load_workbook
 
 
 def job_search(result_offset) -> dict:
@@ -35,8 +37,8 @@ def get_jobs_data(jobs):
         time_since_posting = job["detected_extensions"].get("posted_at")
         salary = try_to_get_salary(job)
         qualifications = list_to_string(job["job_highlights"][0]["items"])
-        job_data = [job_id, job_title, company_name, location, description, related_link, work_from_home, time_since_posting,
-                    salary, qualifications]
+        job_data = [job_id, job_title, company_name, location, description, related_link, work_from_home,
+                    time_since_posting, salary, qualifications]
         jobs_data.append(job_data)
         index += 1
     return jobs_data
@@ -73,7 +75,7 @@ def setup_database(cursor: sqlite3.Cursor):
         location TEXT,
         description TEXT,
         related_link TEXT,
-        work_from_home BOOL DEFAULT FALSE,
+        work_from_home INTEGER DEFAULT FALSE,
         time_since_posting TEXT,
         salary TEXT
         );''')
@@ -92,14 +94,39 @@ def close_database(connection: sqlite3.Connection):
 def insert_job_to_database(job_data, cursor):
     jobs_table_data = job_data[:9]
     qualifications_data = [job_data[0], job_data[9]]
-    cursor.executemany('''INSERT INTO jobs
+    cursor.executemany('''INSERT OR IGNORE INTO jobs
     VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?);''', (jobs_table_data,))
-    cursor.executemany('''INSERT INTO qualifications VALUES(?, ?);''', (qualifications_data,))
+    cursor.executemany('''INSERT OR IGNORE INTO qualifications VALUES(?, ?);''', (qualifications_data,))
 
 
 def insert_jobs_to_database(jobs_data, cursor):
     for job in jobs_data:
         insert_job_to_database(job, cursor)
+
+
+def get_excel_jobs():
+    wb = load_workbook('Sprint3Data.xlsx')
+    jobs_sheet = wb['Comp490 Jobs']
+    excel_jobs = []
+    for row in jobs_sheet.iter_rows(min_row=2, values_only=True):
+        company_name = row[0]
+        job_id = row[2]
+        location = row[4]
+        publication_date = row[5]
+        salary_max = row[6]
+        salary_min = row[7]
+        salary_type = row[8]
+        job_title = row[9]
+        salary = f'${salary_min}-${salary_max} {salary_type}'
+        time_since_posting = time.time() - publication_date
+        description = None
+        related_link = None
+        work_from_home = False
+        qualifications = None
+        job_data = [job_id, job_title, company_name, location, description, related_link, work_from_home,
+                    time_since_posting, salary, qualifications]
+        excel_jobs.append(job_data)
+    return excel_jobs
 
 
 def main():
@@ -112,6 +139,8 @@ def main():
         jobs_data = get_jobs_data(jobs)
         insert_jobs_to_database(jobs_data, cursor)
         pages_searched += 1
+    excel_jobs = get_excel_jobs()
+    insert_jobs_to_database(excel_jobs, cursor)
     close_database(connection)
 
 

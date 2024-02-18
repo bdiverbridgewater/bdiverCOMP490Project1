@@ -1,7 +1,6 @@
-from typing import Tuple
-
+from openpyxl import load_workbook
 from main import (open_database, setup_database, close_database, job_search, try_to_get_salary, get_jobs_data,
-                  insert_jobs_to_database)
+                  insert_jobs_to_database, get_excel_jobs)
 
 
 def test_database_functionality():
@@ -10,8 +9,10 @@ def test_database_functionality():
     test_search = test_data_retrieval()
     test_jobs_data = get_jobs_data(test_search)
     insert_jobs_to_database(test_jobs_data, cursor)
+    excel_data = get_excel_jobs()
+    insert_jobs_to_database(excel_data, cursor)
     cursor.execute('''SELECT * FROM jobs;''')
-    job: Tuple = cursor.fetchone()
+    job = cursor.fetchone()
     assert job[0] == test_search[0].get("job_id")
     assert job[1] == test_search[0].get("title")
     assert job[2] == test_search[0].get("company_name")
@@ -31,3 +32,14 @@ def test_data_retrieval():
     assert search_results is not None
     assert len(search_results) == 10
     return search_results
+
+
+def test_excel_data_retrieval():
+    wb = load_workbook('Sprint3Data.xlsx')
+    sheet = wb['Comp490 Jobs']
+    test_excel_data = get_excel_jobs()
+    test_job = test_excel_data[0]
+    assert sheet[2][0].value == test_job[2]
+    assert sheet[2][2].value == test_job[0]
+    assert sheet[2][4].value == test_job[3]
+    assert sheet[2][9].value == test_job[1]
