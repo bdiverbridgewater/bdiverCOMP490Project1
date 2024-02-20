@@ -131,7 +131,7 @@ def main():
     connection, cursor = open_database("job_search.sqlite")
     setup_database(cursor)
     pages_searched = 0
-    total_pages = 1
+    total_pages = 5
     while pages_searched < total_pages:
         jobs = job_search(pages_searched * 10)
         jobs_data = get_jobs_data(jobs)
