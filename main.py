@@ -1,4 +1,3 @@
-import time
 from serpapi import google_search
 import secrets
 import sqlite3
@@ -112,13 +111,12 @@ def get_excel_jobs():
         company_name = row[0]
         job_id = row[2]
         location = row[4]
-        publication_date = row[5]
         salary_max = row[6]
         salary_min = row[7]
         salary_type = row[8]
         job_title = row[9]
         salary = f'${salary_min}-${salary_max} {salary_type}'
-        time_since_posting = time.time() - publication_date
+        time_since_posting = row[1]
         description = None
         related_link = None
         work_from_home = False
