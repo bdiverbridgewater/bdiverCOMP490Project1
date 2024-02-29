@@ -1,3 +1,5 @@
+import re
+
 from serpapi import google_search
 import secrets
 import sqlite3
@@ -34,10 +36,15 @@ def get_jobs_data(jobs):
         related_link = job["related_links"][0].get("link")
         work_from_home = job["detected_extensions"].get("work_from_home")
         time_since_posting = job["detected_extensions"].get("posted_at")
-        salary = try_to_get_salary(job)
+        try:
+            benefits_section = job.get("job_highlights")[2]
+        except IndexError:
+            benefits_section = None
+
+        min_salary, max_salary = get_salary(benefits_section, job["description"])
         qualifications = list_to_string(job["job_highlights"][0]["items"])
         job_data = [job_id, job_title, company_name, location, description, related_link, work_from_home,
-                    time_since_posting, salary, qualifications]
+                    time_since_posting, min_salary, max_salary, qualifications]
         jobs_data.append(job_data)
         index += 1
     return jobs_data
@@ -76,7 +83,8 @@ def setup_database(cursor: sqlite3.Cursor):
         related_link TEXT,
         work_from_home INTEGER DEFAULT FALSE,
         time_since_posting TEXT,
-        salary TEXT
+        min_salary INTEGER,
+        max_salary INTEGER
         );''')
     cursor.execute('''CREATE TABLE IF NOT EXISTS qualifications(
         job_id TEXT,
@@ -91,10 +99,10 @@ def close_database(connection: sqlite3.Connection):
 
 
 def insert_job_to_database(job_data, cursor):
-    jobs_table_data = job_data[:9]
-    qualifications_data = [job_data[0], job_data[9]]
+    jobs_table_data = job_data[:10]
+    qualifications_data = [job_data[0], job_data[10]]
     cursor.executemany('''INSERT OR IGNORE INTO jobs
-    VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?);''', (jobs_table_data,))
+    VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?);''', (jobs_table_data,))
     cursor.executemany('''INSERT OR IGNORE INTO qualifications VALUES(?, ?);''', (qualifications_data,))
 
 
@@ -115,16 +123,45 @@ def get_excel_jobs():
         salary_min = row[7]
         salary_type = row[8]
         job_title = row[9]
-        salary = f'${salary_min}-${salary_max} {salary_type}'
         time_since_posting = row[1]
         description = None
         related_link = None
         work_from_home = False
         qualifications = None
         job_data = [job_id, job_title, company_name, location, description, related_link, work_from_home,
-                    time_since_posting, salary, qualifications]
+                    time_since_posting, salary_min, salary_max, qualifications]
         excel_jobs.append(job_data)
     return excel_jobs
+
+
+def get_salary(benefits_section: dict, job_description: str):
+    """this is more complicated than you were required to do, I'm looking in several places for salary info"""
+    min_salary = 0
+    max_salary = 0
+    if benefits_section:  # if we got a dictionary with stuff in it
+        for benefit_item in benefits_section['items']:
+            if 'range' in benefit_item.lower():
+                # from https://stackoverflow.com/questions/63714217/how-can-i-extract-numbers-containing-commas-from
+                # -strings-in-python
+                numbers = re.findall(r'\b\d{1,3}(?:,\d{3})*(?:\.\d+)?(?!\d)', benefit_item)
+                if numbers:  # if we found salary data, return it
+                    return int(float(numbers[0].replace(',', ''))), int(float(numbers[1].replace(',', '')))
+            numbers = re.findall(r'\b\d{1,3}(?:,\d{3})*(?:\.\d+)?(?!\d)', benefit_item)
+            if len(numbers) == 2 and int(
+                    float(numbers[0].replace(',', ''))) > 30:  # some jobs just put the numbers in one item
+                # and the description in another
+                return int(float(numbers[0].replace(',', ''))), int(float(numbers[1].replace(',', '')))
+            else:
+                return min_salary, max_salary
+    location = job_description.find("salary range")
+    if location < 0:
+        location = job_description.find("pay range")
+    if location < 0:
+        return min_salary, max_salary
+    numbers = re.findall(r'\b\d{1,3}(?:,\d{3})*(?:\.\d+)?(?!\d)', job_description[location:location + 50])
+    if numbers:
+        return int(numbers[0].replace(',', '')), int(numbers[1].replace(',', ''))
+    return min_salary, max_salary
 
 
 def main():
