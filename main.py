@@ -121,7 +121,6 @@ def get_excel_jobs():
         location = row[4]
         salary_max = row[6]
         salary_min = row[7]
-        salary_type = row[8]
         job_title = row[9]
         time_since_posting = row[1]
         description = None
