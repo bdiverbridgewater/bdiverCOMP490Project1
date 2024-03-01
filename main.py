@@ -1,13 +1,13 @@
 import re
 import sys
-
-from serpapi import google_search
+import PySide6
+import PySide6.QtWidgets
 import key_secrets
 import sqlite3
 from typing import Tuple
 from openpyxl import load_workbook
 from PySide6.QtQuick import QQuickWindow, QSGRendererInterface
-import PySide6.QtWidgets
+from serpapi import google_search
 
 from FirstWindow import FirstWindow
 
