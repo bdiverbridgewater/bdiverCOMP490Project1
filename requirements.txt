@@ -1,3 +1,6 @@
 serpapi
 google_search_results
 openpyxl
+Pyside6
+folium
+geopy

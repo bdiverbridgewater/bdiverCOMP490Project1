@@ -1,15 +1,20 @@
 import re
+import sys
 
 from serpapi import google_search
-import secrets
+import key_secrets
 import sqlite3
 from typing import Tuple
 from openpyxl import load_workbook
+from PySide6.QtQuick import QQuickWindow, QSGRendererInterface
+import PySide6.QtWidgets
+
+from FirstWindow import FirstWindow
 
 
 def job_search(result_offset) -> dict:
     params = {
-        "api_key": secrets.api_key,
+        "api_key": key_secrets.api_key,
         "engine": "google_jobs",
         "google_domain": "google.com",
         "q": "Software Engineer",
@@ -163,6 +168,12 @@ def get_salary(benefits_section: dict, job_description: str):
     return min_salary, max_salary
 
 
+def display_data(data: list):
+    qt_app = PySide6.QtWidgets.QApplication(sys.argv)  # sys.argv is the list of command line arguments
+    my_window = FirstWindow(data)
+    sys.exit(qt_app.exec())
+
+
 def main():
     connection, cursor = open_database("job_search.sqlite")
     setup_database(cursor)
@@ -175,7 +186,11 @@ def main():
         pages_searched += 1
     excel_jobs = get_excel_jobs()
     insert_jobs_to_database(excel_jobs, cursor)
+    cursor.execute('''SELECT * from jobs;''')
+    data = cursor.fetchall()
     close_database(connection)
+    QQuickWindow.setGraphicsApi(QSGRendererInterface.GraphicsApi.Software)
+    display_data(data)
 
 
 if __name__ == "__main__":
