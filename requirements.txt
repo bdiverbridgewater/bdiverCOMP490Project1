@@ -4,3 +4,4 @@ openpyxl
 Pyside6
 folium
 geopy
+QTWidgets
