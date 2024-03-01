@@ -32,8 +32,9 @@ class FirstWindow(QWidget):
         for item in data:
             display_text = f"{item[1]}\t\t{item[2]}"
             list_item = QListWidgetItem(display_text, listview=self.list_control)
+            assert list_item is not None
 
-    def demo_list_item_selected(self, current: QListWidgetItem, previous: QListWidgetItem):
+    def demo_list_item_selected(self, current: QListWidgetItem):
         selected_data = current.data(0)  # the data function has a 'role' choose 0 unless you extended QListWidgetItem
         state_name = selected_data.split("\t")[0]  # split on tab and take the first resulting entry
         full_record = self.find_full_data_record(state_name)
