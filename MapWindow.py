@@ -41,7 +41,8 @@ class Comp490MapWindow(QWidget):
         for data in self.data_to_display:
             job_location = data[3]
             job_company = data[2]
-            job_loc_geocoded = geolocator.geocode(job_location, timeout=100)  # this might need try/catch for small towns
+            job_loc_geocoded = geolocator.geocode(job_location, timeout=100)
+            # this might need try/catch for small towns
             if job_loc_geocoded is not None:
                 folium.Marker(
                     location=[job_loc_geocoded.latitude, job_loc_geocoded.longitude],

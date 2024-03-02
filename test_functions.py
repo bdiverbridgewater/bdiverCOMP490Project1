@@ -1,6 +1,4 @@
-from openpyxl import load_workbook
-from main import (open_database, setup_database, close_database, job_search, get_jobs_data,
-                  insert_jobs_to_database, get_excel_jobs, get_salary)
+from main import *
 
 
 def test_database_functionality():
