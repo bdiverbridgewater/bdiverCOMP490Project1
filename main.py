@@ -4,7 +4,8 @@ import key_secrets
 import sqlite3
 from typing import Tuple
 from openpyxl import load_workbook
-from PySide6 import QtQuick, QtWidgets
+import PySide6.QtWidgets
+from PySide6.QtQuick import QQuickWindow, QSGRendererInterface
 from serpapi import google_search
 
 from FirstWindow import FirstWindow
@@ -167,7 +168,7 @@ def get_salary(benefits_section: dict, job_description: str):
 
 
 def display_data(data: list):
-    qt_app = QtWidgets.QApplication(sys.argv)  # sys.argv is the list of command line arguments
+    qt_app = PySide6.QtWidgets.QApplication(sys.argv)  # sys.argv is the list of command line arguments
     my_window = FirstWindow(data)
     assert my_window is not None
     sys.exit(qt_app.exec())
@@ -188,7 +189,7 @@ def main():
     cursor.execute('''SELECT * from jobs;''')
     data = cursor.fetchall()
     close_database(connection)
-    QtQuick.QQuickWindow.setGraphicsApi(QtQuick.QSGRendererInterface.GraphicsApi.Software)
+    QQuickWindow.setGraphicsApi(QSGRendererInterface.GraphicsApi.Software)
     display_data(data)
 
 
