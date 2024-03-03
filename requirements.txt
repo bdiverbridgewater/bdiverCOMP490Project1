@@ -4,7 +4,3 @@ openpyxl
 Pyside6
 folium
 geopy
-QTWidgets
-Pyside6-addons
-shiboken6
-Pyside6-essentials

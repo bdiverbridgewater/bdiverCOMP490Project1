@@ -1,7 +1,7 @@
 def filter_by_keyword(data, keyword):
     filtered_data = []
     for item in data:
-        if item[1].contains(keyword) or item[4].contains(keyword):
+        if keyword in item[1] or item[4]:
             filtered_data.append(item)
     return tuple(filtered_data)
 
@@ -9,7 +9,7 @@ def filter_by_keyword(data, keyword):
 def filter_by_location(data, location):
     filtered_data = []
     for item in data:
-        if item[3].contains(location):
+        if location in item[3]:
             filtered_data.append(item)
     return tuple(filtered_data)
 

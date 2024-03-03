@@ -2,6 +2,7 @@ from openpyxl import load_workbook
 
 from main import (open_database, setup_database, close_database, job_search, get_jobs_data, insert_jobs_to_database,
                   get_excel_jobs, get_salary)
+from filter_functions import filter_by_keyword, filter_by_remote, filter_by_location, filter_by_min_salary
 
 
 def test_database_functionality():
@@ -51,3 +52,35 @@ def test_excel_data_retrieval():
     assert sheet[2][2].value == test_job[0]
     assert sheet[2][4].value == test_job[3]
     assert sheet[2][9].value == test_job[1]
+
+
+def test_filter_by_keyword():
+    test_excel_data = get_excel_jobs()
+    test_keyword = "Web"
+    filtered_test_data = filter_by_keyword(test_excel_data, test_keyword)
+    for job in filtered_test_data:
+        assert test_keyword in job[1] or job[4]
+
+
+def test_filter_by_remote():
+    test_data = get_jobs_data(job_search(0))
+    test_data = filter_by_remote(test_data)
+    for job in test_data:
+        assert job[6] == 1
+
+
+def test_filter_by_location():
+    test_excel_data = get_excel_jobs()
+    test_location = "Ohio"
+    filtered_test_data = filter_by_location(test_excel_data, test_location)
+    for job in filtered_test_data:
+        assert test_location in job[3]
+
+
+def test_filter_by_min_salary():
+    test_excel_data = get_excel_jobs()
+    test_salary = 200000
+    filtered_test_data = filter_by_min_salary(test_excel_data, test_salary)
+    print(len(filtered_test_data))
+    for job in filtered_test_data:
+        assert job[8] >= test_salary
