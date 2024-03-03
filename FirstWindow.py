@@ -1,6 +1,8 @@
-from PySide6.QtWidgets import QWidget, QPushButton, QListWidget, QApplication, QListWidgetItem, QMessageBox
+from PySide6.QtWidgets import QWidget, QPushButton, QListWidget, QApplication, QListWidgetItem, QMessageBox, QComboBox, \
+    QLabel, QLineEdit
 import MapWindow
 import SecondWindow
+from filter_functions import filter_by_keyword, filter_by_remote, filter_by_location, filter_by_min_salary
 
 
 class FirstWindow(QWidget):
@@ -10,6 +12,8 @@ class FirstWindow(QWidget):
         self.list_control = None
         self.setup_window()
         self.data_window = None
+        self.filter_option = None
+        self.input = None
 
     def setup_window(self):
         self.setWindowTitle("Software Engineering Jobs")
@@ -23,12 +27,38 @@ class FirstWindow(QWidget):
         quit_button.clicked.connect(QApplication.instance().quit)
         quit_button.resize(quit_button.sizeHint())
         quit_button.move(300, 400)
-        comp490_demo_button = QPushButton("Map", self)
-        comp490_demo_button.move(300, 400)
-        comp490_demo_button.clicked.connect(self.show_map_window)
+        map_button = QPushButton("Map", self)
+        map_button.move(200, 400)
+        map_button.clicked.connect(self.show_map_window)
+        filter_button = QPushButton("Filter", self)
+        filter_button.clicked.connect(self.filter_data)
+        filter_button.move(140, 400)
+        filter_choices = QComboBox(self)
+        filter_choices.addItems(["Keyword", "Location", "Work From Home", "Min Salary"])
+        filter_choices.move(0, 450)
+        self.filter_option = filter_choices.currentTextChanged
+        label = QLabel("Filtering Input", self)
+        label.move(30, 370)
+        filter_input = QLineEdit(self)
+        filter_input.move(0, 400)
+        self.input = filter_input.textEdited
         self.show()
 
-    def put_data_in_list(self, data: list[dict]):
+    def filter_data(self):
+        if self.filter_option == "Keyword":
+            self.data = filter_by_keyword(self.data, self.input)
+        if self.filter_option == "Location":
+            self.data = filter_by_location(self.data, self.input)
+        if self.filter_option == "Work From Home":
+            self.data = filter_by_remote(self.data)
+        if self.filter_option == "Min Salary":
+            self.data = filter_by_min_salary(self.data, self.input)
+        display_list = QListWidget(self)
+        self.list_control = display_list
+        self.put_data_in_list(self.data)
+        display_list.resize(400, 350)
+
+    def put_data_in_list(self, data):
         for item in data:
             display_text = f"{item[1]}\t\t{item[2]}"
             list_item = QListWidgetItem(display_text, listview=self.list_control)

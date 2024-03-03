@@ -1,12 +1,15 @@
 import re
 import sqlite3
+import sys
 from typing import Tuple
-import GUI
 
+import PySide6.QtWidgets
+from PySide6.QtQuick import QQuickWindow, QSGRendererInterface
 from openpyxl import load_workbook
 from serpapi import google_search
 
 import key_secrets
+from FirstWindow import FirstWindow
 
 
 def job_search(result_offset) -> dict:
@@ -165,6 +168,18 @@ def get_salary(benefits_section: dict, job_description: str):
     return min_salary, max_salary
 
 
+def display_data(data: list):
+    qt_app = PySide6.QtWidgets.QApplication(sys.argv)  # sys.argv is the list of command line arguments
+    my_window = FirstWindow(data)
+    assert my_window is not None
+    sys.exit(qt_app.exec())
+
+
+def start_gui(data):
+    QQuickWindow.setGraphicsApi(QSGRendererInterface.GraphicsApi.Software)
+    display_data(data)
+
+
 def main():
     connection, cursor = open_database("job_search.sqlite")
     setup_database(cursor)
@@ -180,7 +195,7 @@ def main():
     cursor.execute('''SELECT * from jobs;''')
     data = cursor.fetchall()
     close_database(connection)
-    GUI.start_gui(data)
+    start_gui(data)
 
 
 if __name__ == "__main__":
