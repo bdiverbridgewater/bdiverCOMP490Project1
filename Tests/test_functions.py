@@ -4,7 +4,7 @@ from main import (open_database, setup_database, close_database, job_search, get
 
 
 def test_database_functionality():
-    connection, cursor = open_database("test_database.sqlite")
+    connection, cursor = open_database("../test_database.sqlite")
     setup_database(cursor)
     test_search = test_data_retrieval()
     test_jobs_data = get_jobs_data(test_search)
