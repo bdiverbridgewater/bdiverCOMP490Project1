@@ -1,5 +1,5 @@
-from PySide6.QtWidgets import QWidget, QPushButton, QListWidget, QApplication, QListWidgetItem, QMessageBox, QComboBox, \
-    QLabel, QLineEdit
+from PySide6.QtWidgets import (QWidget, QPushButton, QListWidget, QApplication, QListWidgetItem, QMessageBox,
+                               QComboBox, QLabel, QLineEdit)
 import MapWindow
 import SecondWindow
 from filter_functions import filter_by_keyword, filter_by_remote, filter_by_location, filter_by_min_salary
